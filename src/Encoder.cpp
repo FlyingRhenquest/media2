@@ -45,7 +45,7 @@ namespace fr::media2 {
   void Encoder::process(Frame::const_pointer frame,
 			StreamData::pointer streamIn) {
     if (0 == stream->data->context->time_base.den) {
-      stream->data->context->time_base = streamIn->stream->time_base;
+      stream->data->context->time_base = streamIn->time_base;
     }
     int retval = avcodec_send_frame(stream->data->context.get(), frame.get());
     if (retval < 0) {
@@ -62,7 +62,6 @@ namespace fr::media2 {
 	err.append(std::to_string(retval));
 	throw std::runtime_error(err);
       }
-      std::cout << "Encoding packet" << std::endl;
       stream->packets(workingPacket, stream->data);
       av_packet_unref(workingPacket.get());
     }

@@ -82,7 +82,7 @@ void load(Archive &ar, AVPacket &packet, const unsigned int version) {
   ar >> packet.side_data_elems;
   if (packet.side_data_elems > 0) {
     packet.side_data = (AVPacketSideData *) malloc(sizeof(AVPacketSideData));
-    ar >> packet.side_data;
+    ar >> *packet.side_data;
   } else {
     packet.side_data = nullptr;
   }

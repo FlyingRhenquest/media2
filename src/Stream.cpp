@@ -16,9 +16,23 @@
  */
 
 #include <fr/media2/Stream.h>
+#include <fr/media2/Segment.h>
+#include <uuid.h>
 
 namespace fr {
   namespace media2 {
+
+    Stream::Stream(Segment* seg) {
+      char uuidstr[40];
+      memset(uuidstr, '\0', sizeof(uuidstr));
+      uuid_unparse(seg->jobId, uuidstr);
+      std::string jobstr{uuidstr};
+      // Segment and Stream don't know filename, so use
+      // the job ID from the segment instead (You can
+      // parse it back to a uuid with uuid_parse)
+      data = std::make_shared<StreamData>(seg, jobstr);
+    }
+    
     void Stream::forward(const Packet::pointer& packet) {
       packets(packet, data);
     }

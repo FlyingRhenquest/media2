@@ -37,8 +37,10 @@ extern "C" {
 }
 
 #include <boost/signals2.hpp>
+#include <deque>
 #include <fr/media2/PacketSubscriber.h>
 #include <fr/media2/StreamData.h>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -87,10 +89,11 @@ namespace fr::media2 {
 
   public:
     std::vector<StreamInfo::pointer> streams;
+    std::deque<Packet::pointer> buffer;
 
     // Constructor will attempt to determine the format from the filename.
     // Specify it directly if you really want to be sure
-    Muxer(std::string filename, std::string format = "");
+    Muxer(std::string filename, std::string format = "", long bufferMax = 300);
     Muxer(const Muxer& copy) = delete;
     virtual ~Muxer() override;
     Muxer operator=(const Muxer& copy) = delete;
@@ -108,6 +111,9 @@ namespace fr::media2 {
     // Close file -- this (should) flush buffers to wherever you're
     // writing, clears stream data, etc.
     void close();
+    
+    // Flushes packet buffer (Close calls this automatically)
+    void flush();
 
     // Lets see if we can get away with cheesy state tracking, shouldn't
     // need to bust out SML for this
@@ -133,5 +139,10 @@ namespace fr::media2 {
     AVFormatContext *context = nullptr;
     // Keeps track of stream start so we can write the header in process
     bool streamStart = true;
+    // Number of elements to retain in buffer.
+    long bufferMax;
+    std::mutex bufferMutex;
+    // Write a packet to output
+    void write(Packet::pointer &);
   };
 }

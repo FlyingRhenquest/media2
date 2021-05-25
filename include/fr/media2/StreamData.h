@@ -43,11 +43,18 @@ extern "C" {
 namespace fr {
   namespace media2 {
 
+    class Segment;
+    
     class StreamData {
     public:
       using pointer = std::shared_ptr<StreamData>;
 
       StreamData(const std::string& filename = "");
+      // Create a StreamData from a Segment, which contains
+      // all the information we need. You can include
+      // filename if you want it set in the stream data,
+      // but this will not actually open a file.
+      StreamData(Segment*, const std::string& filename="");
       // You can copy the shared ptr though
       StreamData(const StreamData& toCopy) = delete;
       ~StreamData();
@@ -60,6 +67,10 @@ namespace fr {
        * for further upstream. Always check to make sure it's not null.
        */
       AVStream *stream = nullptr;
+      /**
+       * Copy time_base from stream for reasons
+       */
+      AVRational time_base;
       /**
        * Codec parameters, always check to make sure it's not null.
        */

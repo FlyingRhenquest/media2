@@ -47,6 +47,10 @@ namespace fr::media2 {
 	throw std::runtime_error("Stream is missing parameters.");
       }
       currentSegment = Segment::create(jobId, *stream->parameters);
+      if (nullptr != stream->stream) {
+	currentSegment->time_base = stream->stream->time_base;
+      }
+
       // (video) Segment needs to start on an iframe, and the first frame of your
       // video has to be an iframe. If they're not, you're doing something
       // strange that I'm not going to support.

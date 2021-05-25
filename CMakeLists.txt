@@ -42,7 +42,9 @@ add_library(media2 SHARED
   ${CMAKE_SOURCE_DIR}/src/Segment.cpp
   ${CMAKE_SOURCE_DIR}/src/Segmenter.cpp
   ${CMAKE_SOURCE_DIR}/src/SegmentSubscriber.cpp
+  ${CMAKE_SOURCE_DIR}/src/SegmentUnpacker.cpp
   ${CMAKE_SOURCE_DIR}/src/Stream.cpp
+  ${CMAKE_SOURCE_DIR}/src/StreamCache.cpp
   ${CMAKE_SOURCE_DIR}/src/StreamData.cpp
   ${CMAKE_SOURCE_DIR}/src/Muxer.cpp
   ${CMAKE_SOURCE_DIR}/src/ZmqSegmentPublisher.cpp

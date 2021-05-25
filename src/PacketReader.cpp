@@ -73,7 +73,12 @@ namespace fr {
     }
 
     void PacketReader::process() {
-      processingThread = std::thread([this](){ processPrivately(); });	
+      using namespace boost::sml;
+      if (state.is("opened"_s)) {
+	sendEvent(PacketReaderStateMachine::play{});
+      } else {
+	processingThread = std::thread([this](){ processPrivately(); });
+      }
     }
 
     void PacketReader::error(const std::string &msg) {
@@ -117,6 +122,7 @@ namespace fr {
 	  auto data = std::make_shared<StreamData>(filename);
 	  stream->data = data;
 	  data->stream = formatContext->streams[i];
+	  data->time_base = data->stream->time_base;
 	  avcodec_parameters_copy(data->parameters, formatContext->streams[i]->codecpar);
 	  data->codec = (AVCodec*) avcodec_find_decoder(formatContext->streams[i]->codecpar->codec_id);
 	  if (!data->codec) {

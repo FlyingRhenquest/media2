@@ -48,6 +48,7 @@ namespace fr::media2 {
     auto ret = Segment::create(toCopy->jobId, toCopy->parameters);
     ret->pts = toCopy->pts;
     ret->dts = toCopy->dts;
+    ret->time_base = toCopy->time_base;
     for (const auto& packet : toCopy->packets) {
       ret->append(Packet::copy(packet));
     }
@@ -59,7 +60,9 @@ namespace fr::media2 {
   }
 
   Segment::pointer Segment::next() {
-    return create(jobId, parameters);
+    auto n = create(jobId, parameters);
+    n->time_base = time_base;
+    return n;
   }
   
   void Segment::append(const Packet::pointer& packet) {

@@ -31,9 +31,11 @@
 #include <fr/media2/Scaler.h>
 #include <fr/media2/Segment.h>
 #include <fr/media2/Segmenter.h>
+#include <fr/media2/SegmentUnpacker.h>
 #include <fr/media2/SegmentSubscriber.h>
 #include <fr/media2/Serialization.h>
 #include <fr/media2/Stream.h>
+#include <fr/media2/StreamCache.h>
 #include <fr/media2/StreamData.h>
 #include <fr/media2/ZmqSegmentPublisher.h>
 #include <fr/media2/ZmqSegmentSubscriber.h>

@@ -54,6 +54,9 @@ namespace fr {
       // in by the library reading the packets.
       static pointer create();
 
+      // Create a packet pointer to nullptr
+      static pointer nullPacket();
+
       // Copy a packet. Note that this may or may not actually copy
       // memory, depending on what LibAV feels like. What I'm
       // instructing it to do is to create a copy Ptr and then

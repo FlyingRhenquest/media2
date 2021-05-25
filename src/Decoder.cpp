@@ -43,7 +43,7 @@ namespace fr {
 
     void Decoder::subscribeCallback(Stream::pointer to) {
       avcodec_parameters_copy(parameters, to->data->parameters);
-      time_base = to->data->stream->time_base;
+      time_base = to->data->time_base;
     }
   }
 }

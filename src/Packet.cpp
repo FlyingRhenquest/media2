@@ -33,8 +33,14 @@ namespace fr {
       return copy;
     }
 
+    Packet::pointer Packet::nullPacket() {
+      return pointer{nullptr, &Packet::destroy};
+    }
+
     void Packet::destroy(AVPacket *pkt) {
-      av_packet_free(&pkt);
+      if (pkt) {
+	av_packet_free(&pkt);
+      }
     }
 
     bool Packet::containsIFrame(const Packet::pointer& packet) {

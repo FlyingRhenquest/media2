@@ -54,7 +54,7 @@ namespace fr::media2 {
       multimsg.recv(socket);
       const zmq::message_t& idMsg = multimsg.back();
       const zmq::message_t& bufferMsg = multimsg.front();
-      char idMsgStr[60];
+      char idMsgStr[40];
       memcpy(jobId, idMsg.data(), idMsg.size());
       uuid_unparse(jobId, idMsgStr);
       buffer << bufferMsg.to_string();

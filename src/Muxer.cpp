@@ -21,7 +21,10 @@
 
 namespace fr::media2 {
 
-  Muxer::Muxer(std::string filename, std::string format) : filename(filename), format(format) {
+  Muxer::Muxer(std::string filename, std::string format, long bufferMax) :
+    filename(filename),
+    format(format),
+    bufferMax(bufferMax) {
     if (!format.empty()) {
       avformat_alloc_output_context2(&context, nullptr, format.c_str(), filename.c_str());
       if (nullptr == context) {
@@ -54,6 +57,12 @@ namespace fr::media2 {
   }
 
   void Muxer::subscribe(Stream::pointer to) {
+    if (!streamStart) {
+      // This is an ffmpeg thing -- if you try to add a stream after the
+      // muxer has started writing, some stuff in the second stream will
+      // not be initialized correctly and ffmpeg will crash.
+      throw std::runtime_error("Can not add a new stream after muxer has written its header.");
+    }
     auto stream = std::make_shared<StreamInfo>(this);
     stream->subscribe(to);
     streams.push_back(stream);
@@ -61,7 +70,7 @@ namespace fr::media2 {
     if (nullptr == stream->stream) {
       throw std::runtime_error("Error creating new stream");
     }
-    stream->stream->time_base = to->data->context->time_base;
+    stream->stream->time_base = to->data->time_base;
     avcodec_parameters_copy(stream->stream->codecpar, to->data->parameters);
   }
 
@@ -94,6 +103,7 @@ namespace fr::media2 {
   }
 
   void Muxer::close() {
+    flush();
     if (state == States::OPEN) {
       if (! streamStart) {
 	// Flush yaddda
@@ -114,27 +124,50 @@ namespace fr::media2 {
   void Muxer::process(const Packet::pointer& packet, StreamData::pointer stream) {
     throw std::runtime_error("Wrong process method called.");
   }
- 
-  void Muxer::process(const Packet::pointer& packet, StreamData::pointer stream, StreamInfo* info) {
+
+  void Muxer::write(Packet::pointer &packet) {
     // Write header if we haven't yet
     if (streamStart) {
       streamStart = false;
-      std::cout << "Writing header" << std::endl;
       int avRet = avformat_write_header(context, nullptr);
       if (avRet < 0) {
 	throw std::runtime_error("Could not write media header.");
       }
     }
-    // Remap packet index to the output stream in this object
-    packet->stream_index = info->stream->index;
-    std::cout << "Writing frame" << std::endl;
     int avRet = av_interleaved_write_frame(context, packet.get());
     if (avRet < 0) {
-      // This apparently doesn't always indicate the stream is done, so
-      // I may want to continue processing despite this
       std::string err{"Error writing packet. RC = "};
       err.append(std::to_string(avRet));
       throw std::runtime_error(err);
+    }
+  }
+
+  void Muxer::flush() {
+    std::lock_guard<std::mutex> lock(bufferMutex);
+    while(!buffer.empty()) {
+      Packet::pointer pkt = std::move(buffer.front());
+      buffer.pop_front();
+      write(pkt);
+    }
+  }
+  
+  void Muxer::process(const Packet::pointer& packet, StreamData::pointer stream, StreamInfo* info) {
+    // Remap packet index to the output stream in this object
+    packet->stream_index = info->stream->index;
+    if (buffer.size() < bufferMax) {
+      std::lock_guard<std::mutex> lock(bufferMutex);
+      buffer.push_back(Packet::copy(packet));
+    } else {
+      // Start reading off the front
+      Packet::pointer pkt = Packet::nullPacket();
+      {
+	std::lock_guard<std::mutex> lock(bufferMutex);
+	buffer.push_back(Packet::copy(packet));
+
+	pkt = std::move(buffer.front());
+	buffer.pop_front();
+      }
+      write(pkt);
     }
   }
 }

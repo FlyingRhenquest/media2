@@ -30,10 +30,18 @@
 namespace fr {
   namespace media2 {
 
+    class Segment;
+    
     class Stream {
     public:
       using pointer = std::shared_ptr<Stream>;
 
+      // The usual construction
+      Stream() = default;
+      ~Stream() = default;
+      // Construct from a segment
+      explicit Stream(Segment*);
+      
       // A pointer to hold the stream data (Different than
       // above pointer def)
       StreamData::pointer data;

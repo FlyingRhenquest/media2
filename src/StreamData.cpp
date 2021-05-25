@@ -16,12 +16,29 @@
  */
 
 #include <fr/media2/StreamData.h>
+#include <fr/media2/Segment.h>
 
 namespace fr {
   namespace media2 {
 
     StreamData::StreamData(const std::string &filename) : filename(filename) {}
 
+    StreamData::StreamData(Segment* seg, const std::string &filename) : filename(filename) {
+      avcodec_parameters_copy(parameters, &seg->parameters);
+      codec = (AVCodec*) avcodec_find_decoder(parameters->codec_id);
+      time_base = seg->time_base;
+      if (nullptr == codec) {
+	throw std::runtime_error("Unknown codec id: " + std::to_string((int) parameters->codec_id));
+      }
+      AVCodecContext *ctx = avcodec_alloc_context3(codec);
+      if (nullptr == ctx) {
+	throw std::runtime_error("Could not create codec context");
+      }
+      ctx->time_base = time_base;
+      avcodec_parameters_to_context(ctx, parameters);
+      setContext(&ctx);
+    }
+    
     StreamData::~StreamData() {
       if (nullptr != parameters) {
 	avcodec_parameters_free(&parameters);

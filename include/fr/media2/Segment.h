@@ -31,6 +31,7 @@
 #include <fr/media2/Serialization.h>
 #include <fr/media2/Packet.h>
 #include <fr/media2/Stream.h>
+#include <libavutil/rational.h>
 #include <memory>
 #include <uuid.h>
 #include <vector>
@@ -74,6 +75,9 @@ namespace fr::media2 {
     int64_t pts;
     int64_t dts;
 
+    // I also need the time base for the stream
+    AVRational time_base;
+
     AVCodecParameters parameters;
     size_t npackets = 0l;
     std::vector<Packet::pointer> packets;
@@ -88,6 +92,8 @@ namespace fr::media2 {
       ar << jobId;
       ar << pts;
       ar << dts;
+      ar << time_base.num;
+      ar << time_base.den;
       ar << parameters;
       ar << npackets;
       for (const Packet::pointer &packet : packets) {
@@ -100,6 +106,8 @@ namespace fr::media2 {
       ar >> jobId;
       ar >> pts;
       ar >> dts;
+      ar >> time_base.num;
+      ar >> time_base.den;
       ar >> parameters;
       size_t pkts;
       ar >> pkts;
