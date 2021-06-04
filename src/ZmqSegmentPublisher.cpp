@@ -42,5 +42,12 @@ namespace fr::media2 {
     multimessage.send(publisher);
   }
 
+  void ZmqSegmentPublisher::process(std::stringstream& buffer, uuid_t id) {
+    zmq::multipart_t multimessage;
+    multimessage.pushmem(id, sizeof(uuid_t));
+    multimessage.pushstr(buffer.str());
+    multimessage.send(publisher);
+  }
+
   
 }

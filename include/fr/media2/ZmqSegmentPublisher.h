@@ -50,14 +50,16 @@ namespace fr::media2 {
     ZmqSegmentPublisher(std::string address);
     ~ZmqSegmentPublisher();
 
+    // This can also be called manually to send a segment
+    void process(const Segment::pointer&) override;
+    // Or via stringstream/uuid
+    void process(std::stringstream&, uuid_t);
+    
   protected:
     std::string remoteAddress;
     uuid_t jobId;
     zmq::context_t context;
     zmq::socket_t publisher;
-    
-    void process(const Segment::pointer&) override;
-    
   };
 
 }

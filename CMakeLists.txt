@@ -242,3 +242,65 @@ target_link_directories(TransportTest PUBLIC
   ${ALL_LINK_DIRS}
   )
 target_compile_definitions(TransportTest PRIVATE TEST_FILE=\"${TEST_DATA_DIR}/testvideo.mp4\")
+
+enable_testing()
+add_test(NAME PacketTest COMMAND PacketTest)
+add_test(NAME PacketSubscriberTest COMMAND PacketSubscriberTest)
+add_test(NAME PacketReaderTest COMMAND PacketReaderTest)
+add_test(NAME DecoderTest COMMAND DecoderTest)
+add_test(NAME EncoderTest COMMAND EncoderTest)
+add_test(NAME MuxerTest COMMAND MuxerTest)
+add_test(NAME SerializationTest COMMAND SerializationTest)
+add_test(NAME TransportTest COMMAND TransportTest)
+
+include(GNUInstallDirs)
+set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include/fr")
+
+set(HEADER_INSTALL_LIST
+  ${INCLUDE_DIR}/media2/Decoder.h
+  ${INCLUDE_DIR}/media2/Encoder.h
+  ${INCLUDE_DIR}/media2/Frame.h
+  ${INCLUDE_DIR}/media2/Frame2Mat.h
+  ${INCLUDE_DIR}/media2/FrameSource.h
+  ${INCLUDE_DIR}/media2/FrameSubscriber.h
+  ${INCLUDE_DIR}/media2/Muxer.h
+  ${INCLUDE_DIR}/media2/Packet.h
+  ${INCLUDE_DIR}/media2/PacketReaderBase.h
+  ${INCLUDE_DIR}/media2/PacketReader.h
+  ${INCLUDE_DIR}/media2/PacketSubscriber.h
+  ${INCLUDE_DIR}/media2/Resampler.h
+  ${INCLUDE_DIR}/media2/Scaler.h
+  ${INCLUDE_DIR}/media2/Segmenter.h
+  ${INCLUDE_DIR}/media2/Segment.h
+  ${INCLUDE_DIR}/media2/SegmentSubscriber.h
+  ${INCLUDE_DIR}/media2/SegmentUnpacker.h
+  ${INCLUDE_DIR}/media2/Serialization.h
+  ${INCLUDE_DIR}/media2/StreamCache.h
+  ${INCLUDE_DIR}/media2/StreamData.h
+  ${INCLUDE_DIR}/media2/Stream.h
+  ${INCLUDE_DIR}/media2/ZmqSegmentPublisher.h
+  ${INCLUDE_DIR}/media2/ZmqSegmentSubscriber.h
+  )
+
+install(FILES ${INCLUDE_DIR}/media2.h
+  DESTINATION include/fr
+)
+
+install(FILES ${HEADER_INSTALL_LIST}
+  DESTINATION include/fr/media2
+)
+
+install(TARGETS media2
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+if (pybind11_FOUND)
+
+  install(TARGETS fr_media2
+    COMPONENT python
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+  
+endif()
