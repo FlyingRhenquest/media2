@@ -18,14 +18,14 @@
 
 #include "JobRegistry.h"
 #include <boost/serialization/vector.hpp>
-
+#include <iostream>
 
 namespace fr::media2::demos {
 
   JobRegistry::JobRegistry(std::string jobAddress, std::string streamAddress) {
     // Launch worker threads
-    jobThread = std::thread([this, &jobAddress]{processBy(jobAddress, [this](std::string id){return this->byJobId(id);});});
-    streamThread = std::thread([this, &streamAddress]{processBy(streamAddress, [this](std::string id){return this->byStreamId(id);});});
+    jobThread = std::thread([this, jobAddress]{processBy(jobAddress, [this](std::string id){return this->byJobId(id);});});
+    streamThread = std::thread([this, streamAddress]{processBy(streamAddress, [this](std::string id){return this->byStreamId(id);});});
   }
 
   JobRegistry::~JobRegistry() {
@@ -80,7 +80,8 @@ namespace fr::media2::demos {
   void JobRegistry::processBy(std::string address, std::function<std::shared_ptr<Job>(std::string id)> queryBy) {
     std::shared_ptr<Job> defaultResponse = std::make_shared<Job>();
     zmq::context_t context;
-    zmq::socket_t receiver(context, ZMQ_REP);
+    zmq::socket_t receiver(context, zmq::socket_type::rep);
+    std::cout << "starting processBy handler on " << address << std::endl;
     receiver.bind(address);
     while(!shutdownFlag) {
       std::shared_ptr<Job> resp;

@@ -42,12 +42,12 @@ namespace fr::media2::demos {
   private:
     friend class boost::serialization::access;
 
-    template<class Archive>
+    template<typename Archive>
     void serialize(Archive &ar, const unsigned int version) {
-      ar & filename;
-      ar & jobId;
-      ar & resolution;
-      ar & streamIds;
+      ar & BOOST_SERIALIZATION_NVP(filename)
+	& BOOST_SERIALIZATION_NVP(jobId)
+	& BOOST_SERIALIZATION_NVP(resolution)
+	& BOOST_SERIALIZATION_NVP(streamIds);
     }
   };
   

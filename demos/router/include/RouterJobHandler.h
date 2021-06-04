@@ -63,11 +63,10 @@ namespace fr::media2::demos {
     void shutdown();
     
   protected:
-    std::string listenAddress;
     std::atomic<bool> shutdownRequest = false;
     std::thread processingThread;
     std::shared_ptr<JobRegistry> registry;
-    void process();
+    void process(std::string);
   };
   
 }

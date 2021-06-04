@@ -81,8 +81,10 @@ int main(int argc, char *argv[]) {
   // Subscribe registry to job handler job notifications
   jobHandler->receivedJob.connect([registry](std::shared_ptr<Job> job) { registry->add(job); });
   // Set up receiving data from user
+  std::cout << "Setting up zmq subscriber on " << incomingSegmentAddress << std::endl;
   auto subscriber = std::make_shared<fr::media2::ZmqSegmentSubscriber>(incomingSegmentAddress);
   // Set up republishing segments
+  std::cout << "Setting up zmq publisher on " << segmentAddress << std::endl;
   auto publisher = std::make_shared<fr::media2::ZmqSegmentPublisher>(segmentAddress);
   subscriber->receivedSegment.connect([publisher,registry](std::stringstream &buffer, uuid_t uuid) {
     // Verify that we have a uuid in memory for this segment

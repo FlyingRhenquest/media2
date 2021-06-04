@@ -17,17 +17,23 @@
  */
 
 #include "RouterJobHandler.h"
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <zmq.hpp>
+#include <iostream>
 
 namespace fr::media2::demos {
 
-  RouterJobHandler::RouterJobHandler(std::string listenAddress, std::share_ptr<JobRegistry> registry) listenAddress(listenAddress), registry(registry) {
-    processingThread = std::thread([this]{process();};);
+  RouterJobHandler::RouterJobHandler(std::string listenAddress, std::shared_ptr<JobRegistry> registry) :
+    registry(registry) {
+    std::cout << "Starting job handler on " << listenAddress << std::endl;
+    processingThread = std::thread([this, listenAddress]{process(listenAddress);});
   }
 
   RouterJobHandler::~RouterJobHandler() {
     shutdown();
-    if (processingThread::joinable()) {
-      processingThread::join();
+    if (processingThread.joinable()) {
+      processingThread.join();
     }
   }
 
@@ -35,20 +41,22 @@ namespace fr::media2::demos {
     shutdownRequest = true;
   }
 
-  void RouterJobHandler::process() {
+  void RouterJobHandler::process(std::string address) {
     zmq::context_t context;
-    zmq::socket_t receiver(context, ZMQ_REP);
-    receiver.bind(listenAddress);
+    zmq::socket_t receiver(context, zmq::socket_type::rep);
+    receiver.bind(address);
     while(!shutdownRequest) {
       std::stringstream buffer;
-      auto req = receiver.recv(buffer, zmq::recv_flags::none);
+      zmq::message_t incomingMsg;
+      auto rep = receiver.recv(incomingMsg, zmq::recv_flags::none);
+      buffer << incomingMsg.to_string();
       auto job = std::make_shared<Job>();
       boost::archive::json_iarchive archive(buffer);
-      archive >> *job;
+      archive >> BOOST_SERIALIZATION_NVP(job);
       while (std::filesystem::exists(job->jobId)) {
 	uuid_t id;
 	uuid_generate(id);
-	char[40] uuidstr;
+	char uuidstr[40];
 	uuid_unparse(id, uuidstr);
 	job->jobId = std::string{uuidstr};
       }
@@ -61,9 +69,9 @@ namespace fr::media2::demos {
 	    // Replace stream ID if it already exists
 	    uuid_t newStreamId;
 	    uuid_generate(newStreamId);
-	    // Since this is a pointer to data in a reference, it should
-	    // automatically change in the Job structure we're working on.
-	    uuid_unparse(newStreamId, stream.c_str());
+	    char uuidstr[40];
+	    uuid_unparse(newStreamId, uuidstr);
+	    stream = uuidstr;
 	    lookup = registry->byStreamId(stream);
 	  }
 	}
@@ -72,13 +80,14 @@ namespace fr::media2::demos {
       // Reserialize the job metadata and send it back to the user
       std::stringstream sendBuffer;
       boost::archive::json_oarchive arch(sendBuffer);
-      arch << *job;
+      arch << BOOST_SERIALIZATION_NVP(job);
       std::ofstream meatData(job->jobId + "/" + "metadata.json");
       meatData << sendBuffer.str();
       // Notify Local Listeners
       receivedJob(job);
       // Reply to client
-      receiver.send(sendBuffer, zmq::send_flags::none);
+      zmq::message_t outgoingMsg(sendBuffer.str());
+      receiver.send(outgoingMsg, zmq::send_flags::none);
     }
   }
   
