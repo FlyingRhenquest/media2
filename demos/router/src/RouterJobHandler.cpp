@@ -17,8 +17,7 @@
  */
 
 #include "RouterJobHandler.h"
-#include <boost/serialization/vector.hpp>
-#include <boost/serialization/shared_ptr.hpp>
+#include <cereal/archives/json.hpp>
 #include <zmq.hpp>
 #include <iostream>
 
@@ -50,18 +49,25 @@ namespace fr::media2::demos {
       zmq::message_t incomingMsg;
       auto rep = receiver.recv(incomingMsg, zmq::recv_flags::none);
       buffer << incomingMsg.to_string();
-      auto job = std::make_shared<Job>();
-      boost::archive::json_iarchive archive(buffer);
-      archive >> BOOST_SERIALIZATION_NVP(job);
-      while (std::filesystem::exists(job->jobId)) {
+      Job jerb;
+      {
+	cereal::JSONInputArchive archive(buffer);
+	archive >> jerb;
+      }
+      std::cout << "Received request for " << buffer.str() << std::endl;
+      while (std::filesystem::exists(jerb.jobId)) {
 	uuid_t id;
 	uuid_generate(id);
 	char uuidstr[40];
 	uuid_unparse(id, uuidstr);
-	job->jobId = std::string{uuidstr};
+	jerb.jobId = std::string{uuidstr};
       }
-      std::filesystem::create_directory(job->jobId);
-      for(auto& stream : job->streamIds) {
+      std::filesystem::current_path(std::filesystem::temp_directory_path());
+      auto path = std::filesystem::current_path();
+      auto jobPath = path / jerb.jobId;
+      std::cout << "Creating " << jobPath.string() << std::endl;
+      std::filesystem::create_directory(jobPath);
+      for(auto& stream : jerb.streamIds) {
 	// If registry exists, check stream IDs for uniqueness too
 	if (nullptr != registry.get()) {
 	  auto lookup = registry->byStreamId(stream);
@@ -75,16 +81,23 @@ namespace fr::media2::demos {
 	    lookup = registry->byStreamId(stream);
 	  }
 	}
-	std::filesystem::create_directory(job->jobId + "/" + stream);
+	auto streamPath = jobPath / stream;
+	std::cout << "Creating " << streamPath.string() << std::endl;
+	std::filesystem::create_directory(streamPath);
       }
       // Reserialize the job metadata and send it back to the user
       std::stringstream sendBuffer;
-      boost::archive::json_oarchive arch(sendBuffer);
-      arch << BOOST_SERIALIZATION_NVP(job);
-      std::ofstream meatData(job->jobId + "/" + "metadata.json");
-      meatData << sendBuffer.str();
+      {
+	cereal::JSONOutputArchive arch(sendBuffer);
+	arch << jerb;
+      }
+      std::ofstream meatData(jerb.jobId + "/" + "metadata.json");
+      meatData << sendBuffer.str() << std::endl;
       // Notify Local Listeners
-      receivedJob(job);
+      auto tempJob = std::make_shared<Job>();
+      (*tempJob) = jerb;
+      std::cout << "Signalling " << tempJob->jobId << std::endl;
+      receivedJob(tempJob); 
       // Reply to client
       zmq::message_t outgoingMsg(sendBuffer.str());
       receiver.send(outgoingMsg, zmq::send_flags::none);

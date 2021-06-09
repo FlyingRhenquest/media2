@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 find_package(PkgConfig REQUIRED)
+find_package(cereal REQUIRED)
 pkg_check_modules(FFLIBS REQUIRED libavutil libavcodec libavdevice libswscale libavformat libswresample)
 pkg_check_modules(UUID REQUIRED uuid)
 find_package(OpenCV REQUIRED)
@@ -25,6 +26,7 @@ add_compile_definitions(__STDC_CONSTANT_MACROS)
 
 set(ALL_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/include
+  ${CEREAL_INCLUDE_DIRS}
   ${FFLIBS_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
@@ -35,17 +37,18 @@ set(ALL_INCLUDE_DIRS
 
 set(ALL_LINK_LIBS
   ${FFLIBS_LIBRARIES}
+  ${CEREAL_LIBRARIES}
   ${Boost_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${cppzmq_LIBRARIES}
   ${ZMQ_LIBRARIES}
   ${UUID_LIBRARIES}
   media2.so
-  json_archive.a
   Threads::Threads
   )
 set(ALL_LINK_DIRS
   ${CMAKE_BINARY_DIR}
+  ${CEREAL_LIBRARY_DIRS}
   ${FFLIBS_LIBRARY_DIRS}
   ${Boost_LIBRARY_DIRS}
   ${OpenCV_LIBRARY_DIRS}
@@ -58,6 +61,7 @@ add_executable(media2_router
   ${CMAKE_SOURCE_DIR}/src/main.cpp
   ${CMAKE_SOURCE_DIR}/src/JobRegistry.cpp
   ${CMAKE_SOURCE_DIR}/src/RouterJobHandler.cpp
+  ${CMAKE_SOURCE_DIR}/src/Job.cpp
 )
 
 target_include_directories(media2_router PUBLIC ${ALL_INCLUDE_DIRS})

@@ -17,8 +17,8 @@
  */
 
 #include "JobRegistry.h"
-#include <boost/serialization/vector.hpp>
 #include <iostream>
+#include <cereal/archives/json.hpp>
 
 namespace fr::media2::demos {
 
@@ -94,8 +94,11 @@ namespace fr::media2::demos {
 	resp = defaultResponse;
       }
       std::stringstream buffer;
-      boost::archive::json_oarchive arch(buffer);
-      arch << *resp;
+      {
+	cereal::JSONOutputArchive arch(buffer);
+	arch(resp);
+      }
+
       zmq::message_t outgoing(buffer.str());
       receiver.send(outgoing, zmq::send_flags::none);
     }

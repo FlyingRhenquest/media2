@@ -29,8 +29,6 @@
 #include <boost/signals2.hpp>
 #include "Job.h"
 #include "JobRegistry.h"
-#include <json_iarchive.hpp>
-#include <json_oarchive.hpp>
 #include <filesystem>
 #include <memory>
 #include <mutex>

@@ -28,7 +28,6 @@
 
 #include <atomic>
 #include "Job.h"
-#include <json_oarchive.hpp>
 #include <memory>
 #include <mutex>
 #include <sstream>

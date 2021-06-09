@@ -28,6 +28,11 @@ namespace fr::media2 {
     uuid_clear(jobId);
   }
 
+  ZmqSegmentPublisher::ZmqSegmentPublisher(std::string address, uuid_t id) : publisher{context, zmq::socket_type::pub} {
+    publisher.connect(address);
+    uuid_copy(jobId, id);
+  }
+
   ZmqSegmentPublisher::~ZmqSegmentPublisher() {}
 
   void ZmqSegmentPublisher::process(const Segment::pointer& segment) {
@@ -35,9 +40,13 @@ namespace fr::media2 {
     boost::archive::binary_oarchive ar(buffer);
     ar << *segment;
     zmq::multipart_t multimessage;
-    // I don't want to have to deserialize my segment just to get the job ID,
-    // so send it first.
-    multimessage.pushmem(segment->jobId, sizeof(uuid_t));
+    if (uuid_is_null(jobId)) {
+      // I don't want to have to deserialize my segment just to get the job ID,
+      // so send it first.
+      multimessage.pushmem(segment->jobId, sizeof(uuid_t));
+    } else {
+      multimessage.pushmem(jobId, sizeof(uuid_t));
+    }
     multimessage.pushstr(buffer.str());
     multimessage.send(publisher);
   }

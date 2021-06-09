@@ -21,9 +21,12 @@
 
 #pragma once
 
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/serialization/serialization.hpp>
+#include <cereal/archives/json.hpp>
+#include <cereal/types/memory.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/string.hpp>
+#include <filesystem>
+#include <stdlib.h>
 #include <sstream>
 #include <string>
 #include <uuid.h>
@@ -33,22 +36,28 @@ namespace fr::media2::demos {
 
   class Job {
   public:
+    Job();
     std::string filename;
     std::string jobId;
     // Resolution should be 4K, 1080 or 720.
     std::string resolution;
     std::vector<std::string> streamIds;
 
-  private:
-    friend class boost::serialization::access;
+    // Returns a path to the root dir for this job.
+    // You can set the working dir with the env var
+    // JOB_STORAGE_ROOT. If undefined, will use
+    // temp dir reported by std::filesystem.
+    std::filesystem::path jobRoot();
 
     template<typename Archive>
-    void serialize(Archive &ar, const unsigned int version) {
-      ar & BOOST_SERIALIZATION_NVP(filename)
-	& BOOST_SERIALIZATION_NVP(jobId)
-	& BOOST_SERIALIZATION_NVP(resolution)
-	& BOOST_SERIALIZATION_NVP(streamIds);
+    void serialize(Archive &ar) {
+      ar(CEREAL_NVP(filename), CEREAL_NVP(jobId), CEREAL_NVP(resolution), CEREAL_NVP(streamIds));
     }
+
+    
+  private:
+    std::filesystem::path storageRoot;
+    
   };
   
 }

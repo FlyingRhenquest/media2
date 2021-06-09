@@ -48,12 +48,17 @@ namespace fr::media2 {
   class ZmqSegmentPublisher : public SegmentSubscriber {
   public:
     ZmqSegmentPublisher(std::string address);
+    // Forces publisher to use supplied uuid
+    ZmqSegmentPublisher(std::string address, uuid_t id);
     ~ZmqSegmentPublisher();
 
     // This can also be called manually to send a segment
     void process(const Segment::pointer&) override;
     // Or via stringstream/uuid
     void process(std::stringstream&, uuid_t);
+
+    // Set/Reset UUID -- forces publisher to use this uuid
+    void setUuid(uuid_t);
     
   protected:
     std::string remoteAddress;
