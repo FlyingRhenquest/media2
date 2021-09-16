@@ -26,6 +26,8 @@
 #define ZMQ_CPP11
 #define ZMQ_HAVE_POLLER
 
+#include <fr/media2/Stream.h>
+#include <fr/media2/StreamData.h>
 #include <fr/media2/SegmentSubscriber.h>
 #include <string>
 #include <uuid.h>
@@ -53,7 +55,7 @@ namespace fr::media2 {
     ~ZmqSegmentPublisher();
 
     // This can also be called manually to send a segment
-    void process(const Segment::pointer&) override;
+    void process(const Segment::pointer&, StreamData::pointer) override;
     // Or via stringstream/uuid
     void process(std::stringstream&, uuid_t);
 

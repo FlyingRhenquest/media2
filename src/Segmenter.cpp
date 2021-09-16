@@ -62,7 +62,7 @@ namespace fr::media2 {
     } else {
       if (((AVMEDIA_TYPE_VIDEO == stream->mediaType) && Packet::containsIFrame(packet)) ||
 	  ((AVMEDIA_TYPE_VIDEO != stream->mediaType) && (currentFrames >= nframes))) {
-	segments(currentSegment);
+	segments(currentSegment, stream);
 	currentSegment = currentSegment->next();
 	currentFrames = 0l;
       }

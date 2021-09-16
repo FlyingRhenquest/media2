@@ -51,14 +51,25 @@ namespace fr::media2 {
       std::stringstream buffer;
       zmq::multipart_t multimsg;
       uuid_t jobId;
+      AVMediaType mt;
+      int width;
+      int height;
       multimsg.recv(socket);
-      const zmq::message_t& idMsg = multimsg.back();
-      const zmq::message_t& bufferMsg = multimsg.front();
+      auto msgiter = multimsg.begin();
+      zmq::message_t uuidMsg = *msgiter++;
+      zmq::message_t mediaTypemessage = *msgiter++;
+      zmq::message_t widthMsg = *msgiter++;
+      zmq::message_t heightMsg = *msgiter++;
+      zmq::message_t bufferMsg = *msgiter;
+      
       char idMsgStr[40];
-      memcpy(jobId, idMsg.data(), idMsg.size());
+      memcpy(jobId, uuidMsg.data(), uuidMsg.size());
       uuid_unparse(jobId, idMsgStr);
+      memcpy(&mt, mediaTypemesage.data(), mediaTypemessage.size());
+      memcpy(&width, widthMsg.data(), widthMsg.size());
+      memcpy(&height, heightMsg.data(), heightMsg.size());
       buffer << bufferMsg.to_string();
-      this->receivedSegment(buffer, jobId);
+      this->receivedSegment(buffer, jobId, mt, width, height);
     });
     // This can be fairly long as we only want to pull the message off the
     // transport and dispatch it to listeners. The only reason to make it

@@ -54,8 +54,9 @@ namespace fr::media2 {
     // Rejoins the working thread
     void join();
 
-    // Subscribe to this signal to receive segments.
-    boost::signals2::signal<void(std::stringstream&, uuid_t)> receivedSegment;
+    // Subscribe to this signal to receive segments. (buffer, uuid, mediatype, width, height)
+    // width and height will be 0 for audio streams
+    boost::signals2::signal<void(std::stringstream&, uuid_t, AVMediaType, int, int)> receivedSegment;
 
   protected:
     std::atomic<bool> shutdownPlox = false;

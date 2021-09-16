@@ -21,11 +21,16 @@
 
 #pragma once
 
+extern "C" {
+#include <libavutil/avutil.h>
+}
+
 #include <cereal/archives/json.hpp>
 #include <cereal/types/memory.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/string.hpp>
 #include <filesystem>
+#include <memory>
 #include <stdlib.h>
 #include <sstream>
 #include <string>
@@ -34,6 +39,24 @@
 
 namespace fr::media2::demos {
 
+  // Single stream info for router
+  class StreamInfo {
+    // Just a serialized UUID
+    std::string streamId;
+    AVMediaType mediaType;
+    // Resolution for video formats 
+    int width;
+    int height;
+
+  private:
+    friend class cereal::access;
+    template<typename Archive>
+    void serialize(Archive &ar) {
+      ar(CEREAL_NVP(streamId), CEREAL_NVP(mediaType), CEREAL_NVP(width), CEREAL_NVP(height));
+    }
+  };
+
+  // Important metadata for router to coordinate requests
   class Job {
   public:
     Job();
@@ -41,7 +64,7 @@ namespace fr::media2::demos {
     std::string jobId;
     // Resolution should be 4K, 1080 or 720.
     std::string resolution;
-    std::vector<std::string> streamIds;
+    std::vector<std::shared_ptr<StreamInfo>> streamIds;
 
     // Returns a path to the root dir for this job.
     // You can set the working dir with the env var
@@ -49,13 +72,16 @@ namespace fr::media2::demos {
     // temp dir reported by std::filesystem.
     std::filesystem::path jobRoot();
 
+  private:    
+
+    friend class cereal::access;
+    
     template<typename Archive>
     void serialize(Archive &ar) {
       ar(CEREAL_NVP(filename), CEREAL_NVP(jobId), CEREAL_NVP(resolution), CEREAL_NVP(streamIds));
     }
 
-    
-  private:
+
     std::filesystem::path storageRoot;
     
   };

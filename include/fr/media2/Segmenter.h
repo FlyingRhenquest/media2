@@ -40,7 +40,7 @@ namespace fr::media2 {
     virtual ~Segmenter() override;
 
     // Boost signal for segments
-    boost::signals2::signal<void(const Segment::pointer &segment)> segments;
+    boost::signals2::signal<void(const Segment::pointer &segment, StreamData::pointer stream)> segments;
 
     // Send the current segment now. Might be handy when you hit EOF.
     void flush();

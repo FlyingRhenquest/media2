@@ -35,7 +35,7 @@ namespace fr::media2 {
 
   ZmqSegmentPublisher::~ZmqSegmentPublisher() {}
 
-  void ZmqSegmentPublisher::process(const Segment::pointer& segment) {
+  void ZmqSegmentPublisher::process(const Segment::pointer& segment, StreamData::pointer stream) {
     std::stringstream buffer;
     boost::archive::binary_oarchive ar(buffer);
     ar << *segment;
@@ -43,18 +43,24 @@ namespace fr::media2 {
     if (uuid_is_null(jobId)) {
       // I don't want to have to deserialize my segment just to get the job ID,
       // so send it first.
-      multimessage.pushmem(segment->jobId, sizeof(uuid_t));
+      multimessage.addmem(segment->jobId, sizeof(uuid_t));
     } else {
-      multimessage.pushmem(jobId, sizeof(uuid_t));
+      multimessage.addmem(jobId, sizeof(uuid_t));
     }
-    multimessage.pushstr(buffer.str());
+    multimessage.addmem(&stream->mediaType, sizeof(AVMediaType));
+    multimessage.addmem(&stream->parameters->width, sizeof(int));
+    multimessage.addmem(&stream->parameters->height, sizeof(int));
+    multimessage.addstr(buffer.str());
     multimessage.send(publisher);
   }
 
-  void ZmqSegmentPublisher::process(std::stringstream& buffer, uuid_t id) {
+  void ZmqSegmentPublisher::process(std::stringstream& buffer, uuid_t id, AVMediaType mt=AVMEDIA_TYPE_UNKNOWN, int width = 0, int height = 0) {
     zmq::multipart_t multimessage;
-    multimessage.pushmem(id, sizeof(uuid_t));
-    multimessage.pushstr(buffer.str());
+    multimessage.addmem(id, sizeof(uuid_t));
+    multimessage.addmem(&mt, sizeof(AVMediaType));
+    multimessage.addmem(&width, sizeof(int));
+    multimessage.addmem(&height, sizeof(int));
+    multimessage.addstr(buffer.str());
     multimessage.send(publisher);
   }
 
