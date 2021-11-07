@@ -1,0 +1,8 @@
+#!/bin/bash
+# Set up for localhost
+export JOB_HANDLER_ADDRESS=tcp://127.0.0.1:3334
+export QUERY_BY_ID_ADDRESS=tcp://127.0.0.1:3335
+export QUERY_BY_STREAM_ADDRESS=tcp://127.0.0.1:3336
+export INCOMING_SEGMENT_ADDRESS=tcp://127.0.0.1:3337
+export OUTGOING_SEGMENT_ADDRESS=tcp://127.0.0.1:3338
+export STORAGE_SERVICE_ADDRESS=tcp:://127.0.0.1:3339
