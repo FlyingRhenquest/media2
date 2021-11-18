@@ -24,9 +24,10 @@ namespace fr::media2 {
   SegmentSubscriber::~SegmentSubscriber() { unsubscribe(); }
 
   void SegmentSubscriber::subscribe(Segmenter *to) {
+    // I don't really need the stream information in this case
     boost::signals2::connection sub =
-      to->segments.connect([this](const Segment::pointer &segment) {
-	this->process(segment);
+      to->segments.connect([this](const Segment::pointer &segment, StreamData::pointer stream) {
+	this->process(segment, stream);
       });
     subscriptions.push_back(sub);
   }

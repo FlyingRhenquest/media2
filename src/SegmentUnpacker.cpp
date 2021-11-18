@@ -57,7 +57,7 @@ namespace fr::media2 {
   }
   
   void SegmentUnpacker::subscribe(ZmqSegmentSubscriber* source) {
-    auto sub = source->receivedSegment.connect([this](std::stringstream &buffer, uuid_t /* notused */){
+    auto sub = source->receivedSegment.connect([this](std::stringstream &buffer, uuid_t /* notused */, AVMediaType /* mediaType*/,  int /* width*/, int /* height */){
       this->receive(buffer);
     });
     subscriptions.push_back(sub);

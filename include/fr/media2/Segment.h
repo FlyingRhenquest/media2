@@ -84,6 +84,7 @@ namespace fr::media2 {
 
   private:
     friend class boost::serialization::access;
+
     // Defining serilization for segments is now pretty easy since I've already
     // defined all its component types
 

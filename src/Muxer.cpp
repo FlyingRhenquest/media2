@@ -160,13 +160,13 @@ namespace fr::media2 {
     } else {
       // Start reading off the front
       Packet::pointer pkt = Packet::nullPacket();
-      {
-	std::lock_guard<std::mutex> lock(bufferMutex);
-	buffer.push_back(Packet::copy(packet));
-
-	pkt = std::move(buffer.front());
-	buffer.pop_front();
-      }
+      
+      std::lock_guard<std::mutex> lock(bufferMutex);
+      buffer.push_back(Packet::copy(packet));
+      
+      pkt = std::move(buffer.front());
+      buffer.pop_front();
+      
       write(pkt);
     }
   }

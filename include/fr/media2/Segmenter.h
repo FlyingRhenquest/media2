@@ -26,6 +26,7 @@
 #include <boost/signals2.hpp>
 #include <fr/media2/Segment.h>
 #include <fr/media2/PacketSubscriber.h>
+#include <mutex>
 
 namespace fr::media2 {
 
@@ -55,6 +56,8 @@ namespace fr::media2 {
     // Number of frames in current segment.
     size_t currentFrames = 0l;
     Segment::pointer currentSegment;
+    std::mutex currentSegmentMutex;
+    StreamData::pointer stream;
     
     void process(const Packet::pointer& packet, StreamData::pointer stream) override;
   };

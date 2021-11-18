@@ -16,6 +16,7 @@
  */
 
 #include <fr/media2/Segmenter.h>
+#include <iostream>
 #include <uuid.h>
 
 namespace fr::media2 {
@@ -35,13 +36,15 @@ namespace fr::media2 {
   // is not an iframe, you're gonna have a bad time. Don't do that. I might drop an
   // assert into Segment at some point or something.
   void Segmenter::flush() {
-    segments(currentSegment);
-    currentSegment = currentSegment->next();
+      segments(currentSegment, stream);
   }
 
   void Segmenter::process(const Packet::pointer &packet, StreamData::pointer stream) {
+    if (nullptr == this->stream.get()) {
+      this->stream = stream;
+    }
     if (nullptr == currentSegment.get()) {
-      if (nullptr == stream->parameters) {
+      if (nullptr == stream.get() || nullptr == stream->parameters) {
 	// If you get one of these, I probably forgot to copy the parameters
 	// pointer from the stream to the stream parameters somewhere.
 	throw std::runtime_error("Stream is missing parameters.");

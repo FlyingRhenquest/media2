@@ -26,6 +26,7 @@
 #include <vector>
 #include <iostream>
 #include <chrono>
+#include <uuid.h>
 
 using namespace fr::media2;
 
@@ -39,9 +40,9 @@ TEST(Transport, lowLevelSegments) {
   
   // Set up and run receiver
   ZmqSegmentSubscriber subscriber(addr);
-  subscriber.receivedSegment.connect([&segsRecvd, &uuids](std::stringstream& buffer, uuid_t uuid) -> void {
-    char uuidChars[37];
-    memset(uuidChars, '\0', sizeof(uuidChars));
+  subscriber.receivedSegment.connect([&segsRecvd, &uuids](std::stringstream& buffer, uuid_t uuid, AVMediaType mt, int width, int height) -> void {
+    char uuidChars[UUID_STR_LEN + 1];
+    memset(uuidChars, '\0', sizeof(char) * UUID_STR_LEN + sizeof(char));
     if (!uuid_is_null(uuid)) {
       uuid_unparse(uuid, uuidChars);
       std::string uuidString(uuidChars);

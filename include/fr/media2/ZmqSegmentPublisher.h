@@ -57,7 +57,7 @@ namespace fr::media2 {
     // This can also be called manually to send a segment
     void process(const Segment::pointer&, StreamData::pointer) override;
     // Or via stringstream/uuid
-    void process(std::stringstream&, uuid_t);
+    void process(std::stringstream&, uuid_t, AVMediaType mt = AVMEDIA_TYPE_UNKNOWN, int width = 0, int height = 0);
 
     // Set/Reset UUID -- forces publisher to use this uuid
     void setUuid(uuid_t);

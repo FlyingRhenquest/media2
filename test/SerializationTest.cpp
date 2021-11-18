@@ -143,7 +143,7 @@ public:
   int64_t dts = AV_NOPTS_VALUE;
 
 protected:
-  void process(const Segment::pointer& segment) override {
+  void process(const Segment::pointer& segment, StreamData::pointer /* stream*/ ) override {
     segmentCount++;
     if (!segment->empty()) {
       if (!Packet::containsIFrame(segment->packets[0])) {

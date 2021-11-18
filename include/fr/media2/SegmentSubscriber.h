@@ -41,9 +41,10 @@ namespace fr::media2 {
     virtual void subscribe(Segmenter *to);
     virtual void unsubscribe();
 
+    virtual void process(const Segment::pointer&, StreamData::pointer) = 0;
+  
   protected:
-    virtual void process(const Segment::pointer&) = 0;
-
+    
     std::vector<boost::signals2::connection> subscriptions;
   };
   

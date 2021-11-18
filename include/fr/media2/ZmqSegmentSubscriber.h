@@ -27,6 +27,10 @@
 #define ZMQ_CPP11
 #define ZMQ_HAVE_POLLER
 
+extern "C" {
+#include <libavutil/avutil.h>
+}
+
 #include <atomic>
 #include <boost/signals2.hpp>
 #include <sstream>

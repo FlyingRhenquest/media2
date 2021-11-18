@@ -56,16 +56,16 @@ namespace fr::media2 {
       int height;
       multimsg.recv(socket);
       auto msgiter = multimsg.begin();
-      zmq::message_t uuidMsg = *msgiter++;
-      zmq::message_t mediaTypemessage = *msgiter++;
-      zmq::message_t widthMsg = *msgiter++;
-      zmq::message_t heightMsg = *msgiter++;
-      zmq::message_t bufferMsg = *msgiter;
+      zmq::message_t& uuidMsg = *msgiter++;
+      zmq::message_t& mediaTypemessage = *msgiter++;
+      zmq::message_t& widthMsg = *msgiter++;
+      zmq::message_t& heightMsg = *msgiter++;
+      zmq::message_t& bufferMsg = *msgiter;
       
       char idMsgStr[40];
       memcpy(jobId, uuidMsg.data(), uuidMsg.size());
       uuid_unparse(jobId, idMsgStr);
-      memcpy(&mt, mediaTypemesage.data(), mediaTypemessage.size());
+      memcpy(&mt, mediaTypemessage.data(), mediaTypemessage.size());
       memcpy(&width, widthMsg.data(), widthMsg.size());
       memcpy(&height, heightMsg.data(), heightMsg.size());
       buffer << bufferMsg.to_string();

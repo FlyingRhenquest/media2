@@ -70,8 +70,10 @@ TEST(MuxerTest, endToEnd) {
   }
   // Now all we have to do is stream the packets
   // through the graph we've built
+  std::cout << "Starting streams..." << std::endl;
   reader.sendEvent(PacketReaderStateMachine::play{});
   reader.join();
+  std::cout << "Closing muxer" << std::endl;
   muxer.close();
 
   ASSERT_TRUE(std::filesystem::exists(outputFile));
