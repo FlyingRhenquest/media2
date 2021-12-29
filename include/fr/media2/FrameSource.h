@@ -39,14 +39,13 @@ namespace fr::media2 {
 
     AVCodecParameters *parameters = nullptr;
     AVRational time_base = {0,0};
+    AVRational avg_frame_rate = {0,0};
+    AVRational r_frame_rate = {0,0};
     FrameSource() {
       parameters = avcodec_parameters_alloc();
     }
-    
     virtual ~FrameSource() {
       avcodec_parameters_free(&parameters);
     }
-    
   };
-  
 }

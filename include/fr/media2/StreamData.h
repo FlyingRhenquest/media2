@@ -37,6 +37,7 @@ extern "C" {
 #include <libavcodec/codec_par.h>
 }
 
+#include <ostream>
 #include <memory>
 #include <string>
 
@@ -44,7 +45,7 @@ namespace fr {
   namespace media2 {
 
     class Segment;
-    
+
     class StreamData {
     public:
       using pointer = std::shared_ptr<StreamData>;
@@ -58,7 +59,7 @@ namespace fr {
       // You can copy the shared ptr though
       StreamData(const StreamData& toCopy) = delete;
       ~StreamData();
-      
+
       // Set on creation by PacketReader
       const std::string filename;
       /**
@@ -70,7 +71,12 @@ namespace fr {
       /**
        * Copy time_base from stream for reasons
        */
-      AVRational time_base;
+      AVRational time_base = {0,0};
+      /**
+       * avg_frame_rate / r_frame_rate from subscribed stream
+       */
+      AVRational avg_frame_rate = {0,0};
+      AVRational r_frame_rate = {0,0};
       /**
        * Codec parameters, always check to make sure it's not null.
        */
@@ -117,8 +123,8 @@ namespace fr {
        */
 
       void setContext(AVCodecContext** ctx);
-      
     };
-    
   }
 }
+
+std::ostream& operator<<(std::ostream& o, const fr::media2::StreamData& data);

@@ -16,6 +16,7 @@
  */
 
 #include <fr/media2/PacketSubscriber.h>
+#include <iostream>
 
 namespace fr {
   namespace media2 {
@@ -29,6 +30,8 @@ namespace fr {
         [this](const Packet::pointer& packet, StreamData::pointer stream) {
 	  this->process(packet, stream);
 	});
+      std::cout << "Stream data is " << (to->data ? "not null" : "null") << std::endl;
+      std::cout << "Stream data stream is " << (to->data->stream ? "not null" : "null") << std::endl;
       subscriptions.push_back(subscription);
       subscribeCallback(to);
     }

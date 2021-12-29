@@ -31,7 +31,7 @@ namespace fr {
   namespace media2 {
 
     class Segment;
-    
+
     class Stream {
     public:
       using pointer = std::shared_ptr<Stream>;
@@ -41,15 +41,15 @@ namespace fr {
       ~Stream() = default;
       // Construct from a segment
       explicit Stream(Segment*);
-      
+
       // A pointer to hold the stream data (Different than
       // above pointer def)
       StreamData::pointer data;
-      
+
       /**
        * Expose a boost signal that can be subscribed to. You can subscribe
        * to it with a lambda or a custom object, depending on what you
-       * need done. Once subscribed, your callback function will receive 
+       * need done. Once subscribed, your callback function will receive
        * packets until you unsubscribe or the stream in question goes dry
        * (Usually do to an EOF or something.) Your callback function
        * will run in the thread of the caller and you can block reading
@@ -66,7 +66,7 @@ namespace fr {
        * Copy the packet instead, if you need it. It should be a fairly
        * low-impact operation.
        */
-      
+
       boost::signals2::signal<void(const Packet::pointer& packet, StreamData::pointer stream)> packets;
 
       /**
@@ -75,6 +75,5 @@ namespace fr {
        */
       void forward(const Packet::pointer& packet);
     };
-    
   }
 }

@@ -59,24 +59,24 @@ namespace fr {
       PacketReader(const std::string& filename);
       PacketReader(const PacketReader& copy) = delete;
       virtual ~PacketReader() override;
-      
+
       // Signals the user can subscribe to
       struct {
-	// Fired with a message when an error occurs.
-	boost::signals2::signal<void(const std::string &)> error;
-	// Fired when the player hits an EOF
-	boost::signals2::signal<void()> eof;
-	// Fired when shutdown is called
-	boost::signals2::signal<void()> shutdown;
-	// Fired when reset is called
-	boost::signals2::signal<void()> reset;
+        // Fired with a message when an error occurs.
+        boost::signals2::signal<void(const std::string &)> error;
+        // Fired when the player hits an EOF
+        boost::signals2::signal<void()> eof;
+        // Fired when shutdown is called
+        boost::signals2::signal<void()> shutdown;
+        // Fired when reset is called
+        boost::signals2::signal<void()> reset;
       } signals;
 
       // Defined in base
       PacketReaderStateMachine::Sender stateSender;
       // State starts in ready state
       boost::sml::sm<PacketReaderStateMachine::PlayerState,
-	boost::sml::thread_safe<std::recursive_mutex>>
+                     boost::sml::thread_safe<std::recursive_mutex>>
       state;
       // Name of the resource to open
       std::string filename;
@@ -105,14 +105,14 @@ namespace fr {
       // objects to the streams, then call process.
       // *Does not block*.
       void process() override;
-      
+
     protected:
       std::thread processingThread;
       AVFormatContext *formatContext = nullptr;
       std::mutex pauseMutex;
       std::mutex streamMutex;
       std::condition_variable paused;
-      
+
       // First thing to do in opening the media source. This
       // object owns the format.
       // TODO: Provide methods to supply input format
@@ -122,28 +122,22 @@ namespace fr {
       bool setupStreams();
       // Processes the file in processingThread.
       void processPrivately();
-      
+
       // Open kicks off opening. This is handled automatically
       // so that the streams can be set up before you try
       // to use them.
       bool open() override;
-      
-      // Closes all the things. 
+      // Closes all the things.
       void close() override;
-      
       // Reset the stream to the beginning and re-open
       void reset() override;
-      
       // Unpauses stream processing (Sending the
       // StateMachine::pause event pauses processing.)
       void unpause() override;
-      
       // Shut down the reader thread
       void shutdown() override;
-
       // Send error to subscribers
       void error(const std::string &msg) override;
-
       // Send eof to subscribers
       void eof() override;
 

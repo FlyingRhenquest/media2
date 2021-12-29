@@ -62,33 +62,32 @@ namespace fr::media2 {
       StreamInfo(Muxer *owner) : owner(owner) {}
 
       ~StreamInfo() {
-	subscription.disconnect();
+        subscription.disconnect();
       }
 
       void subscribe(Stream::pointer to) {
-	subscription = to->packets.connect([this](const Packet::pointer& packet,
-					      StreamData::pointer stream) {
-	  this->process(packet, stream);
-	});
+        subscription = to->packets.connect([this](const Packet::pointer& packet,
+                                                  StreamData::pointer stream) {
+          this->process(packet, stream);
+        });
       }
-      
       // Actually handles the processing for incoming packets on this
       // stream. Forwards on to the process method above
       void process(const Packet::pointer &packet, StreamData::pointer stream) {
-	if (nullptr == owner) {
-	  throw std::runtime_error("Nullptr in muxer (This should not be possible.)");
-	}
-	if (firstFrame) {
-	  // On first frame processed, copy stream info from
-	  // incoming stream to owner's output stream
-	  // stream indexes 
-	}
-	owner->process(packet, stream, this);
+        if (nullptr == owner) {
+          throw std::runtime_error("Nullptr in muxer (This should not be possible.)");
+        }
+        if (firstFrame) {
+          // On first frame processed, copy stream info from
+          // incoming stream to owner's output stream
+          // stream indexes
+        }
+        owner->process(packet, stream, this);
       }
     };
 
   public:
-    std::vector<StreamInfo::pointer> streams;
+    std::vector<StreamInfo::pointer> streaminfo;
     std::deque<Packet::pointer> buffer;
 
     // Constructor will attempt to determine the format from the filename.
@@ -111,7 +110,6 @@ namespace fr::media2 {
     // Close file -- this (should) flush buffers to wherever you're
     // writing, clears stream data, etc.
     void close();
-    
     // Flushes packet buffer (Close calls this automatically)
     void flush();
 
@@ -144,5 +142,10 @@ namespace fr::media2 {
     std::mutex bufferMutex;
     // Write a packet to output
     void write(Packet::pointer &);
+    // Copy stream timing data from input stream to output stream.
+    // We won't necessarily have this info when we subscribe;
+    // ffmpeg frequently has to start reading packets before
+    // these values get populated.
+    void copyTimingData(StreamData::pointer inputStream, StreamInfo *outputInfo);
   };
 }

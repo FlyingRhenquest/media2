@@ -28,21 +28,20 @@ namespace fr::media2 {
     if (!format.empty()) {
       avformat_alloc_output_context2(&context, nullptr, format.c_str(), filename.c_str());
       if (nullptr == context) {
-	std::string err("Error allocating output format context for ");
-	err.append(filename);
-	err.append(" with format specified as ");
-	err.append(format);
-	throw std::runtime_error(err);
+        std::string err("Error allocating output format context for ");
+        err.append(filename);
+        err.append(" with format specified as ");
+        err.append(format);
+        throw std::runtime_error(err);
       }
     } else {
       avformat_alloc_output_context2(&context, nullptr, nullptr, filename.c_str());
       if (nullptr == context) {
-	std::string err("Error allocating output format context for ");
-	err.append(filename);
-	throw std::runtime_error(err);
+        std::string err("Error allocating output format context for ");
+        err.append(filename);
+        throw std::runtime_error(err);
       }
     }
-    
     open();
   }
 
@@ -63,24 +62,26 @@ namespace fr::media2 {
       // not be initialized correctly and ffmpeg will crash.
       throw std::runtime_error("Can not add a new stream after muxer has written its header.");
     }
-    auto stream = std::make_shared<StreamInfo>(this);
-    stream->subscribe(to);
-    streams.push_back(stream);
-    stream->stream = avformat_new_stream(context, to->data->codec);
-    if (nullptr == stream->stream) {
+    auto info = std::make_shared<StreamInfo>(this);
+    info->subscribe(to);
+    streaminfo.push_back(info);
+    info->stream = avformat_new_stream(context, to->data->codec);
+    if (nullptr == info->stream) {
       throw std::runtime_error("Error creating new stream");
     }
-    stream->stream->time_base = to->data->time_base;
-    avcodec_parameters_copy(stream->stream->codecpar, to->data->parameters);
+    info->stream->time_base = to->data->time_base;
+    info->stream->avg_frame_rate = to->data->avg_frame_rate;
+    info->stream->r_frame_rate = to->data->r_frame_rate;
+    avcodec_parameters_copy(info->stream->codecpar, to->data->parameters);
   }
 
   void Muxer::unsubscribe() {
     // Immediately disconnects all subscriptions to encoders
     // You shouldn't have to call this directly (Unless you really
     // want to.)
-    for (auto stream : streams) {
-      if (stream->subscription.connected()) {
-	stream->subscription.disconnect();
+    for (auto info : streaminfo) {
+      if (info->subscription.connected()) {
+        info->subscription.disconnect();
       }
     }
   }
@@ -88,15 +89,15 @@ namespace fr::media2 {
   void Muxer::open() {
     if (state != States::OPEN) {
       if (!(context->flags & AVFMT_NOFILE)) {
-	int avRet = avio_open(&context->pb, filename.c_str(), AVIO_FLAG_WRITE);
-	if (avRet < 0) {
-	  std::string err("Error opening ");
-	  err.append(filename);
-	  err.append(" rc = ");
-	  err.append(std::to_string(avRet));
-	  state = States::ERROR;
-	  throw(err);
-	}
+        int avRet = avio_open(&context->pb, filename.c_str(), AVIO_FLAG_WRITE);
+        if (avRet < 0) {
+          std::string err("Error opening ");
+          err.append(filename);
+          err.append(" rc = ");
+          err.append(std::to_string(avRet));
+          state = States::ERROR;
+          throw(err);
+        }
       }
       state = States::OPEN;
     }
@@ -106,15 +107,15 @@ namespace fr::media2 {
     flush();
     if (state == States::OPEN) {
       if (! streamStart) {
-	// Flush yaddda
-	av_interleaved_write_frame(context, nullptr);
-	// If streamStart is false, we never saw any packets
-	// and trying to write a trailer will probably
-	// segv
-	av_write_trailer(context);
+        // Flush yaddda
+        av_interleaved_write_frame(context, nullptr);
+        // If streamStart is false, we never saw any packets
+        // and trying to write a trailer will probably
+        // segv
+        av_write_trailer(context);
       }
       if (!(context->flags & AVFMT_NOFILE)) {
-	avio_closep(&context->pb);
+        avio_closep(&context->pb);
       }
       state = States::CLOSED;
       streamStart = true;
@@ -131,7 +132,7 @@ namespace fr::media2 {
       streamStart = false;
       int avRet = avformat_write_header(context, nullptr);
       if (avRet < 0) {
-	throw std::runtime_error("Could not write media header.");
+        throw std::runtime_error("Could not write media header.");
       }
     }
     int avRet = av_interleaved_write_frame(context, packet.get());
@@ -150,9 +151,15 @@ namespace fr::media2 {
       write(pkt);
     }
   }
-  
+
   void Muxer::process(const Packet::pointer& packet, StreamData::pointer stream, StreamInfo* info) {
     // Remap packet index to the output stream in this object
+    try {
+      copyTimingData(stream, info);
+    } catch (std::runtime_error &e) {
+      std::cerr << "Warning: Ignoring exception in muxer; output file will probably be incorrect." << std::endl;
+      std::cerr << e.what() << std::endl;
+    }
     packet->stream_index = info->stream->index;
     if (buffer.size() < bufferMax) {
       std::lock_guard<std::mutex> lock(bufferMutex);
@@ -160,14 +167,32 @@ namespace fr::media2 {
     } else {
       // Start reading off the front
       Packet::pointer pkt = Packet::nullPacket();
-      
       std::lock_guard<std::mutex> lock(bufferMutex);
       buffer.push_back(Packet::copy(packet));
-      
       pkt = std::move(buffer.front());
       buffer.pop_front();
-      
       write(pkt);
     }
+  }
+
+  void Muxer::copyTimingData(StreamData::pointer inputStream, StreamInfo* outputInfo) {
+    // Check nulls
+    if (outputInfo) {
+      if (!outputInfo->stream) {
+        throw std::runtime_error("outputInfo->stream is null");
+      }
+    } else {
+      throw std::runtime_error("outputInfo is null");
+    }
+    if (inputStream.get()) {
+      if (!inputStream->stream) {
+        throw std::runtime_error("inputStream->stream is null");
+      }
+    } else {
+      throw std::runtime_error("inputStream is null");
+    }
+    outputInfo->stream->time_base = inputStream->stream->time_base;
+    outputInfo->stream->avg_frame_rate = inputStream->stream->avg_frame_rate;
+    outputInfo->stream->r_frame_rate = inputStream->stream->r_frame_rate;
   }
 }

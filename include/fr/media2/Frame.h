@@ -33,7 +33,6 @@ namespace fr {
     public:
 
       static void destroy(AVFrame*);
-      
       using pointer = std::unique_ptr<AVFrame, decltype(&Frame::destroy)>;
       using const_pointer = const pointer &;
 
@@ -60,8 +59,6 @@ namespace fr {
 
       // Clone frame. If you unref the old one, it's basically a copy.
       static pointer clone(const_pointer copy);
-      
     };
-    
   }
 }

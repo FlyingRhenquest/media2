@@ -28,9 +28,9 @@ namespace fr::media2 {
     if (!codecName.empty()) {
       stream->data->codec = (AVCodec*) avcodec_find_encoder_by_name(codecName.c_str());
       if (nullptr == stream->data->codec) {
-	std::string err{"Could not find codec "};
-	err.append(codecName);
-	throw std::logic_error(err);
+        std::string err{"Could not find codec "};
+        err.append(codecName);
+        throw std::logic_error(err);
       }
     }
   }
@@ -43,9 +43,12 @@ namespace fr::media2 {
   }
 
   void Encoder::process(Frame::const_pointer frame,
-			StreamData::pointer streamIn) {
+                        StreamData::pointer streamIn) {
     if (0 == stream->data->context->time_base.den) {
       stream->data->context->time_base = streamIn->time_base;
+    }
+    if (firstPacket) {
+      firstPacket = false;
     }
     int retval = avcodec_send_frame(stream->data->context.get(), frame.get());
     if (retval < 0) {
@@ -56,20 +59,25 @@ namespace fr::media2 {
     while (retval >= 0) {
       retval = avcodec_receive_packet(stream->data->context.get(), workingPacket.get());
       if (retval == AVERROR(EAGAIN) || retval == AVERROR_EOF) {
-	break;
+        break;
       } else if (retval < 0) {
-	std::string err{"Error encoding frame: "};
-	err.append(std::to_string(retval));
-	throw std::runtime_error(err);
+        std::string err{"Error encoding frame: "};
+        err.append(std::to_string(retval));
+        throw std::runtime_error(err);
       }
-      stream->packets(workingPacket, stream->data);
+      stream->packets(workingPacket, streamIn);
       av_packet_unref(workingPacket.get());
     }
   }
 
   void Encoder::subscribeCallback(FrameSource *source) {
+    if (nullptr != src) {
+      std::cerr << "WARNING: Subscribing encoders to multiple frame sources will produce odd results." << std::endl;
+    } else {
+      src = source;
+    }
     stream->data->codec = (AVCodec*) avcodec_find_encoder(source->parameters->codec_id);
-    AVCodecContext *context = avcodec_alloc_context3(stream->data->codec);
+    context = avcodec_alloc_context3(stream->data->codec);
     if (!context) {
       throw std::runtime_error("Could not find codec");
     }
@@ -92,7 +100,9 @@ namespace fr::media2 {
     }
 
     stream->data->setContext(&context);
-    
+    stream->data->avg_frame_rate = source->avg_frame_rate;
+    stream->data->r_frame_rate = source->r_frame_rate;
+
     int retval = avcodec_open2(stream->data->context.get(), stream->data->codec, nullptr);
     if (retval < 0) {
       std::string err("Could not open context for codec ");

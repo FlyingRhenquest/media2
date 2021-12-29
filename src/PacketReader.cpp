@@ -24,13 +24,13 @@ namespace fr {
       filename(filename),
       stateSender{PacketReaderStateMachine::Sender{this}},
       state{stateSender} {
-	state.process_event(PacketReaderStateMachine::open{});
-      }
+      state.process_event(PacketReaderStateMachine::open{});
+    }
 
     PacketReader::~PacketReader() {
       close();
       if (processingThread.joinable()) {
-	processingThread.join();
+        processingThread.join();
       }
     }
 
@@ -38,7 +38,7 @@ namespace fr {
       bool retval = false;
       retval = openFormat() && setupStreams();
       if (!retval) {
-	sendEvent(PacketReaderStateMachine::open_error{});
+        sendEvent(PacketReaderStateMachine::open_error{});
       }
       return retval;
     }
@@ -68,16 +68,16 @@ namespace fr {
 
     void PacketReader::join() {
       if (processingThread.joinable()) {
-	processingThread.join();
+        processingThread.join();
       }
     }
 
     void PacketReader::process() {
       using namespace boost::sml;
       if (state.is("opened"_s)) {
-	sendEvent(PacketReaderStateMachine::play{});
+        sendEvent(PacketReaderStateMachine::play{});
       } else {
-	processingThread = std::thread([this](){ processPrivately(); });
+        processingThread = std::thread([this](){ processPrivately(); });
       }
     }
 
@@ -98,9 +98,9 @@ namespace fr {
       std::string err{"Error opening "};
       err.append(filename);
       if (0 > apiRet) {
-	state.process_event(PacketReaderStateMachine::open_error{err});
+        state.process_event(PacketReaderStateMachine::open_error{err});
       } else {
-	retval = true;
+        retval = true;
       }
       return retval;
     }
@@ -109,54 +109,54 @@ namespace fr {
       bool foundStreams = false;
       int apiRet = avformat_find_stream_info(formatContext, nullptr);
       if (0 > apiRet) {
-	std::string err{"Could not find any streams in "};
-	err.append(filename);
-	close();
-	state.process_event(PacketReaderStateMachine::open_error{err});
+        std::string err{"Could not find any streams in "};
+        err.append(filename);
+        close();
+        state.process_event(PacketReaderStateMachine::open_error{err});
       } else {
-	for(int i = 0; i < formatContext->nb_streams; ++i) {
-	  // TODO: Build create static functions for these classes
-	  // so if the type ever changes, I don't need to change it
-	  // here too.
-	  auto stream = std::make_shared<Stream>();
-	  auto data = std::make_shared<StreamData>(filename);
-	  stream->data = data;
-	  data->stream = formatContext->streams[i];
-	  data->time_base = data->stream->time_base;
-	  avcodec_parameters_copy(data->parameters, formatContext->streams[i]->codecpar);
-	  data->codec = (AVCodec*) avcodec_find_decoder(formatContext->streams[i]->codecpar->codec_id);
-	  if (!data->codec) {
-	    stream->data.reset();
-	  } else {
-	    stream->data->mediaType = data->codec->type;
-	    AVCodecContext *ctx = avcodec_alloc_context3(data->codec);
-	    if (nullptr == ctx) {
-	      stream->data.reset();
-	    } else {
-	      stream->data->setContext(&ctx);
-	      // Copy default parameters to context if there are any
-	      avcodec_parameters_to_context(stream->data->context.get(), formatContext->streams[i]->codecpar);
-	      if(avcodec_open2(data->context.get(), data->codec, nullptr) < 0) {
-		stream->data.reset();
-	      } else {
-		foundStreams = true;
-		if (AVMEDIA_TYPE_VIDEO == stream->data->mediaType) {
-		  videoStreams.push_back(stream);
-		} else if (AVMEDIA_TYPE_AUDIO == stream->data->mediaType) {
-		  audioStreams.push_back(stream);
-		}
-	      }
-	      streams.push_back(stream);
-	    }
-	  }
-	}
+        for(int i = 0; i < formatContext->nb_streams; ++i) {
+          // TODO: Build create static functions for these classes
+          // so if the type ever changes, I don't need to change it
+          // here too.
+          auto stream = std::make_shared<Stream>();
+          auto data = std::make_shared<StreamData>(filename);
+          stream->data = data;
+          data->stream = formatContext->streams[i];
+          data->time_base = data->stream->time_base;
+          avcodec_parameters_copy(data->parameters, formatContext->streams[i]->codecpar);
+          data->codec = (AVCodec*) avcodec_find_decoder(formatContext->streams[i]->codecpar->codec_id);
+          if (!data->codec) {
+            stream->data.reset();
+          } else {
+            stream->data->mediaType = data->codec->type;
+            AVCodecContext *ctx = avcodec_alloc_context3(data->codec);
+            if (nullptr == ctx) {
+              stream->data.reset();
+            } else {
+              stream->data->setContext(&ctx);
+              // Copy default parameters to context if there are any
+              avcodec_parameters_to_context(stream->data->context.get(), formatContext->streams[i]->codecpar);
+              if(avcodec_open2(data->context.get(), data->codec, nullptr) < 0) {
+                stream->data.reset();
+              } else {
+                foundStreams = true;
+                if (AVMEDIA_TYPE_VIDEO == stream->data->mediaType) {
+                  videoStreams.push_back(stream);
+                } else if (AVMEDIA_TYPE_AUDIO == stream->data->mediaType) {
+                  audioStreams.push_back(stream);
+                }
+              }
+              streams.push_back(stream);
+            }
+          }
+        }
       }
       if (foundStreams) {
-	state.process_event(PacketReaderStateMachine::open_success{});
+        state.process_event(PacketReaderStateMachine::open_success{});
       } else {
-	std::string err{"Could not open any streams in "};
-	err.append(filename);
-	state.process_event(PacketReaderStateMachine::open_error{err});
+        std::string err{"Could not open any streams in "};
+        err.append(filename);
+        state.process_event(PacketReaderStateMachine::open_error{err});
       }
       return foundStreams;
     }
@@ -169,23 +169,23 @@ namespace fr {
 
       using namespace boost::sml;
       while(!state.is("done"_s)) {
-	if (state.is("paused"_s)) {
-	  std::unique_lock<std::mutex> lock;
-	  paused.wait(lock, []{ return true;});
-	}
-	if (av_read_frame(formatContext, packet.get()) < 0) {
-	  state.process_event(PacketReaderStateMachine::eof{});
-	} else {
-	  std::lock_guard<std::mutex> lock(streamMutex);
-	  int streamIndex = packet->stream_index;
-	  if (streams[streamIndex]->data.get() != nullptr) {
-	    streams[streamIndex]->forward(packet);
-	  }
-	  // Drop the previous packet buffer. Copies of
-	  // the packet that you make will continue to hold
-	  // that data.
-	  av_packet_unref(packet.get());
-	}
+        if (state.is("paused"_s)) {
+          std::unique_lock<std::mutex> lock;
+          paused.wait(lock, []{ return true;});
+        }
+        if (av_read_frame(formatContext, packet.get()) < 0) {
+          state.process_event(PacketReaderStateMachine::eof{});
+        } else {
+          std::lock_guard<std::mutex> lock(streamMutex);
+          int streamIndex = packet->stream_index;
+          if (streams[streamIndex]->data.get() != nullptr) {
+            streams[streamIndex]->forward(packet);
+          }
+          // Drop the previous packet buffer. Copies of
+          // the packet that you make will continue to hold
+          // that data.
+          av_packet_unref(packet.get());
+        }
       }
     }
 

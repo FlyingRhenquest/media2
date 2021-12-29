@@ -18,32 +18,36 @@
 
 #include <fr/media2/Decoder.h>
 #include <fr/media2/Frame.h>
+#include <iostream>
 
 namespace fr {
   namespace media2 {
 
     void Decoder::process(const Packet::pointer& packet,
-			  StreamData::pointer stream) {
+                          StreamData::pointer stream) {
       if (stream.get() && stream->context.get()) {
-	int avret = avcodec_send_packet(stream->context.get(),
-					packet.get());
-	while(avret >= 0) {
-	  avret = avcodec_receive_frame(stream->context.get(),
-					workingFrame.get());
-	  if (AVERROR(EAGAIN) == avret || AVERROR_EOF == avret) {
-	    break;
-	  } else if (avret >= 0) {
-	    frames(workingFrame, stream);
-	    av_frame_unref(workingFrame.get());
-	  }
-	}
+        int avret = avcodec_send_packet(stream->context.get(),
+                                        packet.get());
+        while(avret >= 0) {
+          avret = avcodec_receive_frame(stream->context.get(),
+                                        workingFrame.get());
+          if (AVERROR(EAGAIN) == avret || AVERROR_EOF == avret) {
+            break;
+          } else if (avret >= 0) {
+            frames(workingFrame, stream);
+            av_frame_unref(workingFrame.get());
+          }
+        }
       }
     }
 
-
     void Decoder::subscribeCallback(Stream::pointer to) {
-      avcodec_parameters_copy(parameters, to->data->parameters);
-      time_base = to->data->time_base;
+      if(to->data && to->data->stream) {
+        avcodec_parameters_copy(parameters, to->data->parameters);
+        time_base = to->data->time_base;
+        avg_frame_rate = to->data->stream->avg_frame_rate;
+        r_frame_rate = to->data->stream->r_frame_rate;
+      }
     }
   }
 }

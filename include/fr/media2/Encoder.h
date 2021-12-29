@@ -68,8 +68,7 @@ namespace fr::media2 {
     Encoder operator=(const Encoder &copy) = delete;
 
     void subscribeCallback(FrameSource *source) override;
-    void setTimeBase(AVRational base);
-    
+
     // Stream for this encoder. PacketSubscribers can subscribe to this
     Stream::pointer stream = std::make_shared<Stream>();
 
@@ -77,6 +76,10 @@ namespace fr::media2 {
 
     void process(Frame::const_pointer frame,
 		 StreamData::pointer stream) override;
+
+    AVCodecContext *context = nullptr;
+    bool firstPacket = true;
+    FrameSource *src = nullptr;
 
     // Working packet to write to. This is sent in the packets signal.
     // Once you return from that signal, the packet you received will
@@ -87,5 +90,5 @@ namespace fr::media2 {
     // reallocating the workingPacket buffers.)
     Packet::pointer workingPacket = Packet::create();
   };
-  
+
 }

@@ -38,14 +38,14 @@ namespace fr {
       avcodec_parameters_to_context(ctx, parameters);
       setContext(&ctx);
     }
-    
+
     StreamData::~StreamData() {
       if (nullptr != parameters) {
 	avcodec_parameters_free(&parameters);
 	parameters = nullptr;
       }
     }
-    
+
     void StreamData::destroyContext(AVCodecContext* ctx) {
       avcodec_free_context(&ctx);
     }
@@ -57,6 +57,22 @@ namespace fr {
       *ctx = nullptr;
       // This is fine...
     }
-    
+
   }
+}
+
+std::ostream& operator<<(std::ostream& o, const fr::media2::StreamData& data) {
+  o << std::endl <<  "------------------------=< " << data.filename
+    << " " << data.mediaType << " StreamData "
+    << " >=---------------------------------" << std::endl;
+  o << " Stream: " << (data.stream ? "Null" : "Set") << std::endl;
+  o << " Time Base: " << data.time_base.num << " / " << data.time_base.den << std::endl;
+  o << " Avg Frame Rate: " << data.avg_frame_rate.num << " / "
+    << data.avg_frame_rate.den << std::endl;
+  o << " R Frame Rate: " << data.r_frame_rate.num << " / " << data.r_frame_rate.den
+    << std::endl;
+  o << " Codec: " << (data.codec? "Null" : "Set") << std::endl;
+  o << " Context: " << (data.context ? "Null" : "Set") << std::endl;
+  o << "-------------------------------------------------------------------" << std::endl;
+  return o;
 }

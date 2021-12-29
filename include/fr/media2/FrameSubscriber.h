@@ -38,7 +38,7 @@ namespace fr {
       std::vector<boost::signals2::connection> subscriptions;
       // Override process to implement your callback
       virtual void process(Frame::const_pointer frame, StreamData::pointer stream) = 0;
-      
+
     public:
       // This ptr will be copied from source on subscription. I could be convinced
       // to upgrade this to a shared ptr
@@ -48,7 +48,7 @@ namespace fr {
 
       virtual void subscribe(FrameSource *source);
       virtual void subscribe(FrameSource &source);
-      
+
       // You can override subscribeCallback in children classes
       // if you want to run some stuff after the subscription
       // has been set up
@@ -56,6 +56,5 @@ namespace fr {
 
       void unsubscribe();
     };
-    
   }
 }
