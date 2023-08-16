@@ -7,22 +7,47 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
+include(FetchContent)
+
+FetchContent_Declare(
+  gtest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG        v1.14.0
+  )
+
+FetchContent_Declare(
+  boostsml
+  GIT_REPOSITORY https://github.com/boost-ext/sml.git
+  GIT_TAG v1.1.8
+  )
+
+FetchContent_Declare(
+  ZeroMQ
+  GIT_REPOSITORY https://github.com/zeromq/libzmq.git
+  GIT_TAG v4.3.4
+  )
+
+FetchContent_Declare(
+  cppzmq
+  GIT_REPOSITORY https://github.com/zeromq/cppzmq.git
+  GIT_TAG v4.10.0
+  )
+
+FetchContent_MakeAvailable(gtest boostsml ZeroMQ cppzmq)
+
 find_package(PkgConfig REQUIRED)
 include(GoogleTest)
 pkg_check_modules(FFLIBS REQUIRED libavutil libavcodec libavdevice libswscale libavformat libswresample)
-pkg_check_modules(GTEST REQUIRED gtest)
 pkg_check_modules(UUID REQUIRED uuid)
 find_package(OpenCV REQUIRED)
 # Todo: Do I still need EXR? Comment out sometime and see
 pkg_check_modules(EXR REQUIRED OpenEXR)
-pkg_check_modules(ZMQ REQUIRED libzmq)
 
 # Set up boost
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost COMPONENTS system serialization REQUIRED)
-find_package(cppzmq)
 add_definitions( -DBOOST_ALL_DYN_LINK )
 
 # Definitions required by ffmpeg
@@ -55,17 +80,19 @@ set(ALL_INCLUDE_DIRS
   ${FFLIBS_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  ${ZMQ_INCLUDE_DIRS}
-  ${cppzmq_INCLUDE_DIRS}
   ${UUID_INCLUDE_DIRS}
+  ${boostsml_SOURCE_DIR}/include
+  ${gtest_SOURCE_DIR}/googletest/include
+  ${libzmq_SOURCE_DIR}/include
+  ${cppzmq_SOURCE_DIR}
 )
 set(ALL_LINK_LIBS
   ${FFLIBS_LIBRARIES}
   ${Boost_LIBRARIES}
   ${OpenCV_LIBRARIES}
-  ${cppzmq_LIBRARIES}
   ${ZMQ_LIBRARIES}
   ${UUID_LIBRARIES}
+  libzmq
 )
 set(ALL_LINK_DIRS
   ${CMAKE_BINARY_DIR}
@@ -119,44 +146,41 @@ endif()
   
 add_executable(PacketTest ${CMAKE_SOURCE_DIR}/test/PacketTest.cpp ${CMAKE_SOURCE_DIR}/test/main.cpp)
 target_include_directories(PacketTest PUBLIC
-  ${GTEST_INCLUDE_DIRS}
+  gtest
   ${ALL_INCLUDE_DIRS}
   )
 target_link_libraries(PacketTest PUBLIC
-  ${GTEST_LIBRARIES}
+  gtest
   ${ALL_LINK_LIBS}
   media2)
 target_link_directories(PacketTest PUBLIC
-  ${GTEST_LIBRARY_DIRS}
   ${ALL_LINK_DIRS}
   )
 
 add_executable(PacketSubscriberTest ${CMAKE_SOURCE_DIR}/test/PacketSubscriberTest.cpp ${CMAKE_SOURCE_DIR}/test/main.cpp)
 target_include_directories(PacketSubscriberTest PUBLIC
-  ${GTEST_INCLUDE_DIRS}
+  gtest
   ${ALL_INCLUDE_DIRS}
 )
 target_link_libraries(PacketSubscriberTest PUBLIC
-  ${GTEST_LIBRARIES}
+  gtest
   ${ALL_LINK_LIBS}
   media2
 )
 target_link_directories(PacketSubscriberTest PUBLIC
-  ${GTEST_LIBRARY_DIRS}
   ${ALL_LINK_DIRS}
 )
 
 add_executable(PacketReaderTest ${CMAKE_SOURCE_DIR}/test/PacketReaderTest.cpp ${CMAKE_SOURCE_DIR}/test/main.cpp)
 target_include_directories(PacketReaderTest PUBLIC
-  ${GTEST_INCLUDE_DIRS}
+  gtest
   ${ALL_INCLUDE_DIRS}
   )
 target_link_libraries(PacketReaderTest PUBLIC
-  ${GTEST_LIBRARIES}
+  gtest
   ${ALL_LINK_LIBS}
   media2)
 target_link_directories(PacketReaderTest PUBLIC
-  ${GTEST_LIBRARY_DIRS}
   ${ALL_LINK_DIRS}
   )
 # Since this one needs a test file
@@ -165,15 +189,14 @@ target_compile_definitions(PacketReaderTest PRIVATE TEST_FILE=\"${TEST_DATA_DIR}
 
 add_executable(DecoderTest ${CMAKE_SOURCE_DIR}/test/DecoderTest.cpp ${CMAKE_SOURCE_DIR}/test/main.cpp)
 target_include_directories(DecoderTest PUBLIC
-  ${GTEST_INCLUDE_DIRS}
+  gtest
   ${ALL_INCLUDE_DIRS}
   )
 target_link_libraries(DecoderTest PUBLIC
-  ${GTEST_LIBRARIES}
+  gtest
   ${ALL_LINK_LIBS}
   media2)
 target_link_directories(DecoderTest PUBLIC
-  ${GTEST_LIBRARY_DIRS}
   ${ALL_LINK_DIRS}
   )
 target_compile_definitions(DecoderTest PRIVATE TEST_FILE=\"${TEST_DATA_DIR}/testvideo.mp4\")
@@ -181,64 +204,60 @@ target_compile_definitions(DecoderTest PRIVATE TEST_FILE=\"${TEST_DATA_DIR}/test
 
 add_executable(EncoderTest ${CMAKE_SOURCE_DIR}/test/EncoderTest.cpp ${CMAKE_SOURCE_DIR}/test/main.cpp)
 target_include_directories(EncoderTest PUBLIC
-  ${GTEST_INCLUDE_DIRS}
+  gtest
   ${ALL_INCLUDE_DIRS}
   )
 target_link_libraries(EncoderTest PUBLIC
-  ${GTEST_LIBRARIES}
+  gtest
   ${ALL_LINK_LIBS}
   media2
   )
 target_link_directories(EncoderTest PUBLIC
-  ${GTEST_LIBRARY_DIRS}
   ${ALL_LINK_DIRS}
   )
 target_compile_definitions(EncoderTest PRIVATE TEST_FILE=\"${TEST_DATA_DIR}/testvideo.mp4\")
 
 add_executable(MuxerTest ${CMAKE_SOURCE_DIR}/test/MuxerTest.cpp ${CMAKE_SOURCE_DIR}/test/main.cpp)
 target_include_directories(MuxerTest PUBLIC
-  ${GTEST_INCLUDE_DIRS}
+  gtest
   ${ALL_INCLUDE_DIRS}
   )
 target_link_libraries(MuxerTest PUBLIC
-  ${GTEST_LIBRARIES}
+  gtest
   ${ALL_LINK_LIBS}
   media2
   )
 target_link_directories(MuxerTest PUBLIC
-  ${GTEST_LIBRARY_DIRS}
   ${ALL_LINK_DIRS}
   )
 target_compile_definitions(MuxerTest PRIVATE TEST_FILE=\"${TEST_DATA_DIR}/testvideo.mp4\")
 
 add_executable(SerializationTest ${CMAKE_SOURCE_DIR}/test/SerializationTest.cpp ${CMAKE_SOURCE_DIR}/test/main.cpp)
 target_include_directories(SerializationTest PUBLIC
-  ${GTEST_INCLUDE_DIRS}
+  gtest
   ${ALL_INCLUDE_DIRS}
   )
 target_link_libraries(SerializationTest PUBLIC
-  ${GTEST_LIBRARIES}
+  gtest
   ${ALL_LINK_LIBS}
   media2
   )
 target_link_directories(SerializationTest PUBLIC
-  ${GTEST_LIBRARY_DIRS}
   ${ALL_LINK_DIRS}
   )
 target_compile_definitions(SerializationTest PRIVATE TEST_FILE=\"${TEST_DATA_DIR}/testvideo.mp4\")
 
 add_executable(TransportTest ${CMAKE_SOURCE_DIR}/test/Transport.cpp ${CMAKE_SOURCE_DIR}/test/main.cpp)
 target_include_directories(TransportTest PUBLIC
-  ${GTEST_INCLUDE_DIRS}
   ${ALL_INCLUDE_DIRS}
   )
 target_link_libraries(TransportTest PUBLIC
-  ${GTEST_LIBRARIES}
+  gtest
   ${ALL_LINK_LIBS}
   media2
   )
 target_link_directories(TransportTest PUBLIC
-  ${GTEST_LIBRARY_DIRS}
+  gtest
   ${ALL_LINK_DIRS}
   )
 target_compile_definitions(TransportTest PRIVATE TEST_FILE=\"${TEST_DATA_DIR}/testvideo.mp4\")
